@@ -1,44 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
+    <title>PDF预览</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .gallery img {
+        .pdf-container {
             max-width: 100%;
-            height: auto;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .page-container {
+            margin-bottom: 20px;
+            /* 添加阴影效果，使页面之间更容易区分 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+            display: block;
+            margin: 0 auto;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
-    <h1>My Portfolio</h1>
-    <div class="gallery">
+    <div class="pdf-container">
+        <div id="loading" class="loading">PDF加载中，请稍候...</div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const galleryContainer = document.querySelector('.gallery');
-            const baseURL = './images/'; 
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-            const numPages = 54; 
+        const container = document.querySelector('.pdf-container');
+        const loadingElement = document.getElementById('loading');
 
-            for (let i = 1; i <= numPages; i++) {
-                const img = document.createElement('img');
-                img.src = `${baseURL}作品集最终-压缩版_页面_${i.toString().padStart(2, '0')}.jpg`;
-                img.alt = `Page ${i}`;
-                galleryContainer.appendChild(img);
+        // 计算适合屏幕的缩放比例
+        function calculateScale(viewport) {
+            const maxWidth = container.clientWidth - 40; // 减去内边距
+            return maxWidth / viewport.width;
+        }
+
+        // 渲染单个页面
+        async function renderPage(page, pageNumber) {
+            const viewport = page.getViewport({ scale: 1 });
+            const scale = calculateScale(viewport);
+            const scaledViewport = page.getViewport({ scale });
+
+            // 创建页面容器
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'page-container';
+            
+            // 创建canvas
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // 设置canvas尺寸
+            canvas.width = scaledViewport.width;
+            canvas.height = scaledViewport.height;
+
+            pageContainer.appendChild(canvas);
+            container.appendChild(pageContainer);
+
+            // 渲染PDF页面
+            await page.render({
+                canvasContext: context,
+                viewport: scaledViewport
+            }).promise;
+        }
+
+        // 加载并渲染所有页面
+        async function loadPDF() {
+            try {
+                const pdfDoc = await pdfjsLib.getDocument('./PersonalProject.pdf').promise;
+                loadingElement.style.display = 'none';
+
+                // 渲染所有页面
+                for(let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    const page = await pdfDoc.getPage(pageNum);
+                    await renderPage(page, pageNum);
+                }
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                loadingElement.textContent = 'PDF加载失败，请刷新页面重试';
             }
+        }
+
+        // 监听窗口大小变化，重新加载PDF以适应新的屏幕尺寸
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // 清除现有内容
+                container.innerHTML = '<div id="loading" class="loading">正在重新调整大小...</div>';
+                loadPDF();
+            }, 300);
         });
+
+        loadPDF();
     </script>
 </body>
 </html>
