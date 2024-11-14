@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Work</title>
+    <title>My Personal Project</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         .pdf-container {
@@ -29,7 +29,7 @@
 </head>
 <body>
     <div class="pdf-container">
-        <div id="loading" class="loading">PDF Loading...</div>
+        <div id="loading" class="loading">My Personal Project，Loading...</div>
     </div>
 
     <script>
@@ -41,7 +41,7 @@
         // 计算适合屏幕的缩放比例
         function calculateScale(viewport) {
             const maxWidth = container.clientWidth - 40; // 减去内边距
-            return maxWidth / viewport.width;
+            return (maxWidth / viewport.width) * 2.0;
         }
 
         // 渲染单个页面
@@ -61,6 +61,9 @@
             // 设置canvas尺寸
             canvas.width = scaledViewport.width;
             canvas.height = scaledViewport.height;
+            // 设置canvas的显示尺寸
+            canvas.style.width = `${scaledViewport.width / 2}px`;
+            canvas.style.height = `${scaledViewport.height / 2}px`;
 
             pageContainer.appendChild(canvas);
             container.appendChild(pageContainer);
@@ -85,7 +88,7 @@
                 }
             } catch (error) {
                 console.error('Error loading PDF:', error);
-                loadingElement.textContent = 'PDF加载失败，请刷新页面重试';
+                loadingElement.textContent = 'My Personal Project，Refresh';
             }
         }
 
@@ -95,7 +98,7 @@
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 // 清除现有内容
-                container.innerHTML = '<div id="loading" class="loading">正在重新调整大小...</div>';
+                container.innerHTML = '<div id="loading" class="loading">Count Size...</div>';
                 loadPDF();
             }, 300);
         });
